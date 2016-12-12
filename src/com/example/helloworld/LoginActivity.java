@@ -106,7 +106,6 @@ public class LoginActivity extends Activity {
 				final String responseString = arg1.body().string();
 				ObjectMapper mapper = new ObjectMapper();
 				final User user = mapper.readValue(responseString, User.class);
-				
 				runOnUiThread(new Runnable() {
 					public void run() {
 						dlg.dismiss();
