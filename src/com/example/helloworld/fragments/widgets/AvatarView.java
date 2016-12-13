@@ -39,7 +39,8 @@ public class AvatarView extends View {
 	Paint paint;
 	float radius;
 	Handler mainThreadHandler = new Handler();;
-	
+	float srcWidth = 120;
+	float srcHeight = 120;
 	public void setBitmap(Bitmap bmp){
 		if(bmp == null){
 			return;
@@ -87,7 +88,17 @@ public class AvatarView extends View {
 	public void draw(Canvas canvas) {
 		super.draw(canvas);
 		if(paint!=null){
+			canvas.save();
+			
+			float dstWidth = getWidth();
+			float dstHeight = getHeight();
+			
+			float scaleX = srcWidth / dstHeight;
+			float scaleY = srcHeight / dstHeight;
+			
+			canvas.scale(1/scaleX, 1/scaleY);
 			canvas.drawCircle(getWidth()/2, getHeight()/2, radius, paint);	
+			canvas.restore();
 		}
 		
 	}

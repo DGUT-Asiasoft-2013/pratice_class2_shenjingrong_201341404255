@@ -3,6 +3,7 @@ package com.example.helloworld.fragments.pages;
 import java.io.IOException;
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -17,7 +18,9 @@ import com.example.helloworld.MD5;
 import com.example.helloworld.R;
 import com.example.helloworld.api.Server;
 import com.example.helloworld.api.entity.Article;
+import com.example.helloworld.api.entity.Page;
 import com.example.helloworld.api.entity.User;
+import com.example.helloworld.fragments.widgets.AvatarView;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,11 +32,16 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -49,128 +57,167 @@ public class FeedListFragment extends Fragment {
 
 	View view;
 	ListView listView;
-	
-	ArrayList<Article> articleList;
-	
+	Button btnLoadMore;
+	List<Article> articleList;
+	int pageNum = 0;
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		if (view==null){
+		if (view == null) {
 			view = inflater.inflate(R.layout.fragment_page_feed_list, null);
+			View view2 = inflater.inflate(R.layout.activity_load_more, null);
 			
 			listView = (ListView) view.findViewById(R.id.list);
-			
+			btnLoadMore = (Button) view2.findViewById(R.id.load_more);
 			
 			listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 				public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 					onItemClicked(position);
 				}
-			});
+			});	
+			listView.addFooterView(view2);
 			listView.setAdapter(listAdapter);
+		
+			btnLoadMore.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					loadMore();
+				}
+			});
 		}
 
 		return view;
 	}
-	
+
 	public void onResume() {
 		super.onResume();
 		getArticleList();
 	}
-	
+
 	BaseAdapter listAdapter = new BaseAdapter() {
-		
+
 		@SuppressLint("InflateParams")
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			View view = null;
-			
-			if(convertView==null){
+
+			if (convertView == null) {
 				LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-				view = inflater.inflate(android.R.layout.simple_list_item_1, null);	
-			}else{
+				view = inflater.inflate(R.layout.activity_feed_article_list, null);
+			} else {
 				view = convertView;
 			}
 			Article article = articleList.get(position);
-			TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-			text1.setText(article.getTitle());
-			
+			TextView title = (TextView) view.findViewById(R.id.tv_title);
+			TextView text = (TextView) view.findViewById(R.id.tv_text);
+			TextView createDate = (TextView) view.findViewById(R.id.tv_create_date);
+			AvatarView avatar = (AvatarView) view.findViewById(R.id.iv_avatar);
+			title.setText(article.getTitle());
+			text.setText(article.getText());
+			SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd"); 
+			createDate.setText(sdf.format(article.getCreateDate()));
+			User user = new User();
+			user.setAvatar(article.getAuthorAvatar());
+			avatar.load(user);
 			return view;
 		}
-		
+
 		@Override
 		public long getItemId(int position) {
 			// TODO Auto-generated method stub
 			return position;
 		}
-		
+
 		@Override
 		public Object getItem(int position) {
 			// TODO Auto-generated method stub
 			return articleList.get(position);
 		}
-		
+
 		@Override
 		public int getCount() {
-			return articleList==null ? 0 : articleList.size();
+			return articleList == null ? 0 : articleList.size();
 		}
 	};
+
 	/**
 	 * 文章列表的点击事件
+	 * 
 	 * @param position
 	 */
-	void onItemClicked(int position){
+	void onItemClicked(int position) {
 		String text = articleList.get(position).getTitle();
-		
+
 		Intent itnt = new Intent(getActivity(), FeedContentActivity.class);
 		itnt.putExtra("text", text);
-		
+
 		startActivity(itnt);
 	}
+
 	/**
 	 * 获取文章数据
 	 */
-	public void getArticleList(){
+	public void getArticleList() {
 		OkHttpClient client = Server.getSharedClient();
-
-//		MultipartBody requestBody = new MultipartBody.Builder()
-//				.addFormDataPart("userId", 1+"")
-//				.build();
-
-		Request request = Server.requestBuilderWithApi("feeds")
-				.build();
-
+		Request request = Server.requestBuilderWithApi("feeds").build();
 		final ProgressDialog dlg = new ProgressDialog(getActivity());
 		dlg.setCancelable(false);
 		dlg.setCanceledOnTouchOutside(false);
 		dlg.setMessage("正在获取数据");
 		dlg.show();
-
 		client.newCall(request).enqueue(new Callback() {
-
-			@Override
 			public void onResponse(Call arg0, Response arg1) throws IOException {
 				dlg.dismiss();
-				final String responseString = arg1.body().string();
-				try {
-					JSONObject jsonObject = new JSONObject(responseString);
-					final String contentObject = jsonObject.getString("content");
-					
-					ObjectMapper mapper = new ObjectMapper();
-					articleList = mapper.readValue(contentObject, new TypeReference<ArrayList<Article>>(){});
-					
-					getActivity().runOnUiThread(new Runnable() {
-						public void run() {
-							Toast.makeText(getActivity(), articleList.size()+"", Toast.LENGTH_LONG).show();
-							listAdapter.notifyDataSetChanged();
-						}
-					});
-		
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-				
-				
+				String responseString = arg1.body().string();
+				Page<Article> page = new ObjectMapper().readValue(responseString,new TypeReference<Page<Article>>(){});
+				articleList = (ArrayList<Article>) page.getContent();
+				pageNum = page.getNumber();
+				getActivity().runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(getActivity(), "当前页数："+pageNum, Toast.LENGTH_LONG).show();
+						listAdapter.notifyDataSetInvalidated();
+					}
+				});
 			}
 
-			@Override
+			public void onFailure(Call arg0, final IOException arg1) {
+				dlg.dismiss();
+				getActivity().runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(getActivity(), "获取信息失败", Toast.LENGTH_LONG).show();
+					}
+				});
+			}
+		});
+	}
+
+	/**
+	 * 加载更多
+	 */
+	public void loadMore(){
+		OkHttpClient client = Server.getSharedClient();
+		Request request = Server.requestBuilderWithApi("feeds/"+(pageNum+1)).get().build();
+		final ProgressDialog dlg = new ProgressDialog(getActivity());
+		dlg.setCancelable(false);
+		dlg.setCanceledOnTouchOutside(false);
+		dlg.setMessage("正在获取数据");
+		dlg.show();
+		client.newCall(request).enqueue(new Callback() {
+			public void onResponse(Call arg0, Response arg1) throws IOException {
+				dlg.dismiss();
+				String responseString = arg1.body().string();
+				Page<Article> page = new ObjectMapper().readValue(responseString,new TypeReference<Page<Article>>(){});
+				if(articleList == null){
+					articleList = page.getContent();
+				}else{
+					articleList.addAll(page.getContent());
+				}
+				pageNum = page.getNumber();
+				getActivity().runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(getActivity(), "当前页数："+pageNum, Toast.LENGTH_LONG).show();
+						listAdapter.notifyDataSetInvalidated();
+					}
+				});
+			}
+
 			public void onFailure(Call arg0, final IOException arg1) {
 				dlg.dismiss();
 				getActivity().runOnUiThread(new Runnable() {
