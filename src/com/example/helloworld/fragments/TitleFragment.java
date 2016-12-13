@@ -43,7 +43,7 @@ public class TitleFragment extends Fragment{
 	
 	OnGoBackListener onGoBackListener;
 	
-	void setOnGoBackListener(OnGoBackListener onGoBackListener){
+	public void setOnGoBackListener(OnGoBackListener onGoBackListener){
 		this.onGoBackListener = onGoBackListener;
 	}
 	

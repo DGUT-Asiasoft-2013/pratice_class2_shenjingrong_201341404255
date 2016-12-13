@@ -144,10 +144,10 @@ public class FeedListFragment extends Fragment {
 	 */
 	void onItemClicked(int position) {
 		String text = articleList.get(position).getTitle();
-
 		Intent itnt = new Intent(getActivity(), FeedContentActivity.class);
 		itnt.putExtra("text", text);
-
+		itnt.putExtra("title", articleList.get(position).getTitle());
+		itnt.putExtra("articleId", articleList.get(position).getId());
 		startActivity(itnt);
 	}
 

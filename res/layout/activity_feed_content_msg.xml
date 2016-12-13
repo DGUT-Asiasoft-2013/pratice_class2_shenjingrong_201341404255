@@ -10,7 +10,7 @@
         class="com.example.helloworld.fragments.TitleFragment" />
 
     <TextView
-        android:id="@+id/text"
+        android:id="@+id/tv_article_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/frag_title"
@@ -19,11 +19,11 @@
         android:text="TEXT" />
 
     <TextView
-        android:id="@+id/textView1"
+        android:id="@+id/tv_article_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/text"
+        android:layout_below="@+id/tv_article_title"
         android:layout_marginLeft="30dp"
         android:layout_marginTop="20dp"
         
@@ -43,11 +43,13 @@
             android:text="评论" />
 
         <EditText
+            android:id="@+id/et_content"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
 
         <Button
+            android:id="@+id/btn_comment_publish"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:text="发表" />
