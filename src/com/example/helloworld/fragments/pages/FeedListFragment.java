@@ -33,6 +33,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -113,8 +114,8 @@ public class FeedListFragment extends Fragment {
 			AvatarView avatar = (AvatarView) view.findViewById(R.id.iv_avatar);
 			title.setText(article.getTitle());
 			text.setText(article.getText());
-			SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd"); 
-			createDate.setText(sdf.format(article.getCreateDate()));
+			String date = DateFormat.format("yyyy-MM-dd hh:ss", article.getCreateDate()).toString();
+			createDate.setText(date);
 			User user = new User();
 			user.setAvatar(article.getAuthorAvatar());
 			avatar.load(user);

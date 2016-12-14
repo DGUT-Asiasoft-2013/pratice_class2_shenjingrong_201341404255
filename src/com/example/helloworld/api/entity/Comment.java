@@ -1,15 +1,18 @@
 package com.example.helloworld.api.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 
 
-public class Comment {
+public class Comment implements Serializable{
+	
 	User author;
 	Article article;
 	int id;
 	String content;
 	Date editDate;
 	Date createDate;
+	
 	public User getAuthor() {
 		return author;
 	}

@@ -5,13 +5,13 @@
 
     <com.example.helloworld.fragments.widgets.AvatarView
         android:id="@+id/av_comment_person_face"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="5dp"
-        android:src="@drawable/ic_launcher" />
+         />
 
     <TextView
         android:id="@+id/tv_article_comment_person_name"

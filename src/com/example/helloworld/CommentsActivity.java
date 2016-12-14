@@ -11,6 +11,7 @@ import com.example.helloworld.fragments.TitleFragment.OnGoBackListener;
 import com.example.helloworld.fragments.widgets.AvatarView;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.helloworld.api.entity.Article;
 import com.example.helloworld.api.entity.Comment;
 import com.example.helloworld.api.entity.Page;
 
@@ -19,11 +20,14 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,21 +43,32 @@ public class CommentsActivity extends Activity {
 	ListView listView;
 	List<Comment> commentList;
 	int commentPage = 0;
+	Button btnLoadMore;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		setContentView(R.layout.activity_boot);
+		setContentView(R.layout.activity_article_comments);
+		LayoutInflater inflater = LayoutInflater.from(CommentsActivity.this);
+		View view2 = inflater.inflate(R.layout.activity_load_more, null);
 		
+		btnLoadMore = (Button) view2.findViewById(R.id.load_more);
 		fragTitle = (TitleFragment) getFragmentManager().findFragmentById(R.id.frag_article_comments);
 		listView = (ListView) findViewById(R.id.lv_article_comments_list);
-		listView.setAdapter(adapter);
+		
 		OnGoBackListener goBackListener = new OnGoBackListener() {
 			public void goBack() {
 				finish();
 			}
 		};
+		btnLoadMore.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				loadMore();
+			}
+		});
 		fragTitle.setOnGoBackListener(goBackListener);
+		listView.addFooterView(view2);
+		listView.setAdapter(adapter);
 	}
 	
 	@Override
@@ -97,7 +112,7 @@ public class CommentsActivity extends Activity {
 		
 		@Override
 		public Object getItem(int position) {
-			return commentList.get(position);
+			return commentList ==null? null: commentList.get(position);
 		}
 		
 		@Override
@@ -112,9 +127,49 @@ public class CommentsActivity extends Activity {
 	public void loadComments(){
 		OkHttpClient client = Server.getSharedClient();
 		
-		Request request = Server.requestBuilderWithApi("/article/"+getIntent().getIntExtra("articleId", 0)+"/comments"+commentPage)
+		Request request = Server.requestBuilderWithApi("article/"+getIntent().getIntExtra("articleId",0)+"/comments")
+				.get()
 				.build();
-		
+		final ProgressDialog dlg = new ProgressDialog(CommentsActivity.this);
+		dlg.setCancelable(false);
+		dlg.setCanceledOnTouchOutside(false);
+		dlg.setMessage("正在获取数据");
+		dlg.show();
+		client.newCall(request).enqueue(new Callback() {
+			public void onResponse(Call arg0, Response arg1) throws IOException {
+				String result = arg1.body().string();
+				ObjectMapper mapper = new ObjectMapper();
+				Log.e("error", result);
+				Page<Comment> page = mapper.readValue(result, new TypeReference<Page<Comment>>(){});
+				Log.e("error", "00000");
+				commentList = page.getContent();
+				commentPage = page.getNumber();
+				runOnUiThread(new Runnable() {
+					public void run() {
+						dlg.dismiss();
+						adapter.notifyDataSetInvalidated();
+					}
+				});
+				
+			}
+			public void onFailure(Call arg0, IOException arg1) {
+				
+				runOnUiThread(new Runnable() {
+					public void run() {
+						dlg.dismiss();
+						Toast.makeText(CommentsActivity.this, "获取评论失败", Toast.LENGTH_SHORT).show();
+					}
+				});
+			}
+		});
+	}
+	
+	/**
+	 * 获取更多用户评论
+	 */
+	void loadMore(){
+		OkHttpClient client = Server.getSharedClient();
+		Request request = Server.requestBuilderWithApi("article/"+getIntent().getIntExtra("articleId",0)+"/comments/"+(commentPage+1)).build();
 		final ProgressDialog dlg = new ProgressDialog(this);
 		dlg.setCancelable(false);
 		dlg.setCanceledOnTouchOutside(false);
@@ -123,22 +178,26 @@ public class CommentsActivity extends Activity {
 		client.newCall(request).enqueue(new Callback() {
 			public void onResponse(Call arg0, Response arg1) throws IOException {
 				dlg.dismiss();
-				String result = arg1.body().toString();
-				Page<Comment> page = new ObjectMapper().readValue(result, new TypeReference<Page<Comment>>() {});
-				commentList = page.getContent();
-				
+				String responseString = arg1.body().string();
+				Page<Comment> page = new ObjectMapper().readValue(responseString,new TypeReference<Page<Comment>>(){});
+				if(commentList == null){
+					commentList = page.getContent();
+				}else{
+					commentList.addAll(page.getContent());
+				}
+				commentPage = page.getNumber();
 				runOnUiThread(new Runnable() {
 					public void run() {
 						adapter.notifyDataSetInvalidated();
 					}
 				});
-				
 			}
-			public void onFailure(Call arg0, IOException arg1) {
+
+			public void onFailure(Call arg0, final IOException arg1) {
 				dlg.dismiss();
 				runOnUiThread(new Runnable() {
 					public void run() {
-						Toast.makeText(CommentsActivity.this, "获取评论失败", Toast.LENGTH_SHORT).show();
+						Toast.makeText(CommentsActivity.this, "获取信息失败", Toast.LENGTH_LONG).show();
 					}
 				});
 			}

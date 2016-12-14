@@ -17,6 +17,7 @@ import android.graphics.Shader.TileMode;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -65,14 +66,12 @@ public class AvatarView extends View {
 	}
 
 	public void load(User user) {
-		load(Server.serverAddress + user.getAvatar());
+		load(user.getAvatar());
 	}
 
 	public void load(String url) {
 		OkHttpClient client = Server.getSharedClient();
-
 		Request request = new Request.Builder().url(Server.serverAddress + url).method("get", null).build();
-
 		client.newCall(request).enqueue(new Callback() {
 
 			@Override
@@ -80,20 +79,29 @@ public class AvatarView extends View {
 				try {
 					byte[] bytes = arg1.body().bytes();
 					final Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+					if (bmp != null) {
+						mainThreadHandler.post(new Runnable() {
+							public void run() {
+								setBitmap(bmp);
+							}
+						});
+					}
+				} catch (Exception ex) {
 					mainThreadHandler.post(new Runnable() {
 						public void run() {
-							setBitmap(bmp);
+							setBitmap(null);
 						}
 					});
-				} catch (Exception ex) {
-
 				}
 			}
 
 			@Override
 			public void onFailure(Call arg0, IOException arg1) {
-				// TODO Auto-generated method stub
-
+				mainThreadHandler.post(new Runnable() {
+					public void run() {
+						setBitmap(null);
+					}
+				});
 			}
 		});
 	}
@@ -111,7 +119,7 @@ public class AvatarView extends View {
 			float scaleY = srcHeight / dstHeight;
 
 			canvas.scale(1 / scaleX, 1 / scaleY);
-			canvas.drawCircle(getWidth() / 2, getHeight() / 2, radius, paint);
+			canvas.drawCircle(srcWidth / 2, srcHeight / 2, Math.min(srcWidth, srcHeight) / 2, paint);
 			canvas.restore();
 		}
 
