@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.ProgressDialog;
@@ -60,11 +61,12 @@ public class FeedListFragment extends Fragment {
 	Button btnLoadMore;
 	List<Article> articleList;
 	int pageNum = 0;
+	Activity activity;
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		if (view == null) {
 			view = inflater.inflate(R.layout.fragment_page_feed_list, null);
 			View view2 = inflater.inflate(R.layout.activity_load_more, null);
-			
+			activity=getActivity();
 			listView = (ListView) view.findViewById(R.id.list);
 			btnLoadMore = (Button) view2.findViewById(R.id.load_more);
 			
@@ -143,9 +145,8 @@ public class FeedListFragment extends Fragment {
 	 * @param position
 	 */
 	void onItemClicked(int position) {
-		String text = articleList.get(position).getTitle();
-		Intent itnt = new Intent(getActivity(), FeedContentActivity.class);
-		itnt.putExtra("text", text);
+		Intent itnt = new Intent(activity, FeedContentActivity.class);
+		itnt.putExtra("text", articleList.get(position).getText());
 		itnt.putExtra("title", articleList.get(position).getTitle());
 		itnt.putExtra("articleId", articleList.get(position).getId());
 		startActivity(itnt);
@@ -157,7 +158,7 @@ public class FeedListFragment extends Fragment {
 	public void getArticleList() {
 		OkHttpClient client = Server.getSharedClient();
 		Request request = Server.requestBuilderWithApi("feeds").build();
-		final ProgressDialog dlg = new ProgressDialog(getActivity());
+		final ProgressDialog dlg = new ProgressDialog(activity);
 		dlg.setCancelable(false);
 		dlg.setCanceledOnTouchOutside(false);
 		dlg.setMessage("正在获取数据");
@@ -167,11 +168,11 @@ public class FeedListFragment extends Fragment {
 				dlg.dismiss();
 				String responseString = arg1.body().string();
 				Page<Article> page = new ObjectMapper().readValue(responseString,new TypeReference<Page<Article>>(){});
-				articleList = (ArrayList<Article>) page.getContent();
+				articleList = page.getContent();
 				pageNum = page.getNumber();
-				getActivity().runOnUiThread(new Runnable() {
+				activity.runOnUiThread(new Runnable() {
 					public void run() {
-						Toast.makeText(getActivity(), "当前页数："+pageNum, Toast.LENGTH_LONG).show();
+						Toast.makeText(activity, "当前页数："+pageNum, Toast.LENGTH_LONG).show();
 						listAdapter.notifyDataSetInvalidated();
 					}
 				});
@@ -179,9 +180,9 @@ public class FeedListFragment extends Fragment {
 
 			public void onFailure(Call arg0, final IOException arg1) {
 				dlg.dismiss();
-				getActivity().runOnUiThread(new Runnable() {
+				activity.runOnUiThread(new Runnable() {
 					public void run() {
-						Toast.makeText(getActivity(), "获取信息失败", Toast.LENGTH_LONG).show();
+						Toast.makeText(activity, "获取信息失败", Toast.LENGTH_LONG).show();
 					}
 				});
 			}
@@ -194,7 +195,7 @@ public class FeedListFragment extends Fragment {
 	public void loadMore(){
 		OkHttpClient client = Server.getSharedClient();
 		Request request = Server.requestBuilderWithApi("feeds/"+(pageNum+1)).get().build();
-		final ProgressDialog dlg = new ProgressDialog(getActivity());
+		final ProgressDialog dlg = new ProgressDialog(activity);
 		dlg.setCancelable(false);
 		dlg.setCanceledOnTouchOutside(false);
 		dlg.setMessage("正在获取数据");
@@ -210,9 +211,9 @@ public class FeedListFragment extends Fragment {
 					articleList.addAll(page.getContent());
 				}
 				pageNum = page.getNumber();
-				getActivity().runOnUiThread(new Runnable() {
+				activity.runOnUiThread(new Runnable() {
 					public void run() {
-						Toast.makeText(getActivity(), "当前页数："+pageNum, Toast.LENGTH_LONG).show();
+						Toast.makeText(activity, "当前页数："+pageNum, Toast.LENGTH_LONG).show();
 						listAdapter.notifyDataSetInvalidated();
 					}
 				});
@@ -220,9 +221,9 @@ public class FeedListFragment extends Fragment {
 
 			public void onFailure(Call arg0, final IOException arg1) {
 				dlg.dismiss();
-				getActivity().runOnUiThread(new Runnable() {
+				activity.runOnUiThread(new Runnable() {
 					public void run() {
-						Toast.makeText(getActivity(), "获取信息失败", Toast.LENGTH_LONG).show();
+						Toast.makeText(activity, "获取信息失败", Toast.LENGTH_LONG).show();
 					}
 				});
 			}
