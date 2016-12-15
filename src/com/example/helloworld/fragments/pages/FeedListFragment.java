@@ -42,6 +42,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
@@ -62,7 +63,12 @@ public class FeedListFragment extends Fragment {
 	Button btnLoadMore;
 	List<Article> articleList;
 	int pageNum = 0;
+	int searchNum = 0;
+	boolean isSearch = false;
 	Activity activity;
+	EditText etKeyword;
+	Button btnSearch;
+	TextView tvAll;
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		if (view == null) {
 			view = inflater.inflate(R.layout.fragment_page_feed_list, null);
@@ -70,6 +76,9 @@ public class FeedListFragment extends Fragment {
 			activity=getActivity();
 			listView = (ListView) view.findViewById(R.id.list);
 			btnLoadMore = (Button) view2.findViewById(R.id.load_more);
+			etKeyword = (EditText) view.findViewById(R.id.et_search_keyword);
+			btnSearch = (Button) view.findViewById(R.id.btn_search);
+			tvAll = (TextView) view.findViewById(R.id.tv_all);
 			
 			listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 				public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -81,7 +90,25 @@ public class FeedListFragment extends Fragment {
 		
 			btnLoadMore.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
-					loadMore();
+					if(isSearch){
+						loadMore("/article/s/"+etKeyword.getText().toString(),String.valueOf(searchNum+1));
+					}else{
+						loadMore("feeds/"+(pageNum+1),"");
+					}
+					
+				}
+			});
+			
+			btnSearch.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					isSearch = true;
+					searchByKeyword("article/s/"+etKeyword.getText().toString(),searchNum);
+				}
+			});
+			
+			tvAll.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					getArticleList();
 				}
 			});
 		}
@@ -173,6 +200,7 @@ public class FeedListFragment extends Fragment {
 				pageNum = page.getNumber();
 				activity.runOnUiThread(new Runnable() {
 					public void run() {
+						isSearch = false;
 						Toast.makeText(activity, "当前页数："+pageNum, Toast.LENGTH_LONG).show();
 						listAdapter.notifyDataSetInvalidated();
 					}
@@ -193,9 +221,14 @@ public class FeedListFragment extends Fragment {
 	/**
 	 * 加载更多
 	 */
-	public void loadMore(){
+	public void loadMore(String url,String page){
 		OkHttpClient client = Server.getSharedClient();
-		Request request = Server.requestBuilderWithApi("feeds/"+(pageNum+1)).get().build();
+		MultipartBody requestBody = new MultipartBody.Builder()
+				.addFormDataPart("page",String.valueOf(page))
+				.build();
+		Request request = Server.requestBuilderWithApi("feeds/"+(pageNum+1))
+				.post(requestBody)
+				.build();
 		final ProgressDialog dlg = new ProgressDialog(activity);
 		dlg.setCancelable(false);
 		dlg.setCanceledOnTouchOutside(false);
@@ -229,5 +262,52 @@ public class FeedListFragment extends Fragment {
 				});
 			}
 		});
+	}
+	
+	/**
+	 * 根据内容搜索
+	 */
+	public void searchByKeyword(String url,int page){
+		OkHttpClient client = Server.getSharedClient();
+		MultipartBody requestBody = new MultipartBody.Builder()
+				.addFormDataPart("page",String.valueOf(page))
+				.build();
+		Request request = Server.requestBuilderWithApi(url)
+				.post(requestBody)
+				.build();
+		final ProgressDialog dlg = new ProgressDialog(activity);
+		dlg.setCancelable(false);
+		dlg.setCanceledOnTouchOutside(false);
+		dlg.setMessage("正在获取数据");
+		dlg.show();
+		client.newCall(request).enqueue(new Callback() {
+			public void onResponse(Call arg0, Response arg1) throws IOException {
+				dlg.dismiss();
+				String res = arg1.body().string();
+				Page<Article> page = new ObjectMapper().readValue(res, new TypeReference<Page<Article>>(){});
+				searchNum = page.getNumber();
+				articleList.clear();
+				articleList.addAll(page.getContent());
+				getActivity().runOnUiThread(new Runnable() {
+					public void run() {
+						listAdapter.notifyDataSetInvalidated();
+						if(articleList==null||articleList.size()==0){
+							Toast.makeText(getActivity(), "没有相关的搜索结果", Toast.LENGTH_SHORT).show();
+						}
+					}
+				});
+				
+			}
+			
+			public void onFailure(Call arg0, IOException arg1) {
+				dlg.dismiss();
+				getActivity().runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(getActivity(), "网络连接失败，请检查网络", Toast.LENGTH_SHORT).show();
+					}
+				});
+			}
+		});
+				
 	}
 }

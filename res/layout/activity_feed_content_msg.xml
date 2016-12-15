@@ -44,6 +44,18 @@
             android:layout_marginRight="26dp"
             android:text="查看评论"
             android:textColor="@android:color/holo_red_light" />
+
+        <TextView
+            android:id="@+id/tv_likes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/tv_lookcomments"
+            android:layout_alignBottom="@+id/tv_lookcomments"
+            android:layout_marginRight="17dp"
+            android:layout_toLeftOf="@+id/tv_lookcomments"
+            android:text="点赞0"
+            android:textColor="@android:color/holo_green_dark" />
+
     </RelativeLayout>
 
     <LinearLayout

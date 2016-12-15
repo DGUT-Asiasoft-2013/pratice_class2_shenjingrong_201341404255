@@ -10,6 +10,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -34,6 +35,10 @@ public class FeedContentActivity extends Activity {
 	TextView tvTitle;
 	TextView tvText;
 	TextView tvLookComment;
+	TextView tvLike;
+
+	boolean isLike = false;
+	int countlikes = 0;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -44,6 +49,7 @@ public class FeedContentActivity extends Activity {
 		tvTitle = (TextView) findViewById(R.id.tv_article_title);
 		tvText = (TextView) findViewById(R.id.tv_article_text);
 		tvLookComment = (TextView) findViewById(R.id.tv_lookcomments);
+		tvLike = (TextView) findViewById(R.id.tv_likes);
 
 		intent = getIntent();
 		onGoBackListener = new OnGoBackListener() {
@@ -65,6 +71,12 @@ public class FeedContentActivity extends Activity {
 			}
 		});
 
+		tvLike.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				likes();
+			}
+		});
+
 	}
 
 	@Override
@@ -73,6 +85,8 @@ public class FeedContentActivity extends Activity {
 		fragTitle.setTitleText("文章详情");
 		tvTitle.setText(intent.getStringExtra("title"));
 		tvText.setText(intent.getStringExtra("text"));
+		checkLikes();
+		countLikes();
 	}
 
 	/**
@@ -84,7 +98,7 @@ public class FeedContentActivity extends Activity {
 		MultipartBody requestBody = new MultipartBody.Builder()
 				.addFormDataPart("content", etContent.getText().toString()).build();
 
-		Request request = Server.requestBuilderWithApi("/article/" + intent.getIntExtra("articleId", 0) + "/comments")
+		Request request = Server.requestBuilderWithApi("article/" + intent.getIntExtra("articleId", 0) + "/comments")
 				.method("post", null).post(requestBody).build();
 
 		final ProgressDialog dlg = new ProgressDialog(this);
@@ -121,8 +135,124 @@ public class FeedContentActivity extends Activity {
 	 * 查看评论
 	 */
 	public void lookComments() {
-		Intent itnt = new Intent(FeedContentActivity.this,CommentsActivity.class);
+		Intent itnt = new Intent(FeedContentActivity.this, CommentsActivity.class);
 		itnt.putExtra("articleId", intent.getIntExtra("articleId", 0));
 		startActivity(itnt);
+	}
+
+	/**
+	 * 点赞
+	 */
+	public void likes() {
+		OkHttpClient client = Server.getSharedClient();
+
+		MultipartBody requestBody = new MultipartBody.Builder().addFormDataPart("isLike", String.valueOf(!isLike))
+				.build();
+
+		Request request = Server.requestBuilderWithApi("article/likes/" + intent.getIntExtra("articleId", 0))
+				.post(requestBody).build();
+
+		client.newCall(request).enqueue(new Callback() {
+			public void onResponse(Call arg0, Response arg1) throws IOException {
+				String rs = arg1.body().string();
+				final int res = Integer.valueOf(rs);
+				runOnUiThread(new Runnable() {
+					public void run() {
+						if (res == 0) {
+							isLike = false;
+							tvLike.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+							countLikes();
+							Toast.makeText(FeedContentActivity.this, "取消点赞", Toast.LENGTH_SHORT).show();
+						} else {
+							isLike = true;
+							tvLike.setTextColor(getResources().getColor(android.R.color.darker_gray));
+							countLikes();
+							Toast.makeText(FeedContentActivity.this, "点赞", Toast.LENGTH_SHORT).show();
+						}
+
+					}
+				});
+			}
+
+			public void onFailure(Call arg0, IOException arg1) {
+				runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(FeedContentActivity.this, "点赞失败", Toast.LENGTH_SHORT).show();
+					}
+				});
+			}
+		});
+	}
+
+	/**
+	 * 检查是否点赞
+	 */
+	public void checkLikes() {
+		OkHttpClient client = Server.getSharedClient();
+
+		Request request = Server
+				.requestBuilderWithApi("/article/" + intent.getIntExtra("articleId", 0) + "/like/checklike").build();
+		client.newCall(request).enqueue(new Callback() {
+			public void onResponse(Call arg0, Response arg1) throws IOException {
+				String rs = arg1.body().string();
+				boolean islike = Boolean.valueOf(rs);
+				if (islike) {
+					runOnUiThread(new Runnable() {
+						public void run() {
+							isLike = true;
+							tvLike.setTextColor(getResources().getColor(android.R.color.darker_gray));
+						}
+					});
+				} else {
+					runOnUiThread(new Runnable() {
+						public void run() {
+							isLike = false;
+							tvLike.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+						}
+					});
+				}
+			}
+
+			@Override
+			public void onFailure(Call arg0, IOException arg1) {
+				runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(FeedContentActivity.this, "点赞检查出错", Toast.LENGTH_SHORT).show();
+					}
+				});
+			}
+		});
+	}
+
+	/**
+	 * 统计点赞人数
+	 * @return
+	 */
+	public void countLikes() {
+		OkHttpClient client = Server.getSharedClient();
+
+		Request request = Server.requestBuilderWithApi("article/like/count/" + intent.getIntExtra("articleId", 0))
+				.build();
+		client.newCall(request).enqueue(new Callback() {
+			public void onResponse(Call arg0, Response arg1) throws IOException {
+				String rs = arg1.body().string();
+				final int res = Integer.valueOf(rs);
+				runOnUiThread(new Runnable() {
+					public void run() {
+						tvLike.setText("点赞"+res);
+					}
+				});
+			}
+
+			@Override
+			public void onFailure(Call arg0, IOException arg1) {
+				runOnUiThread(new Runnable() {
+					public void run() {
+						Toast.makeText(FeedContentActivity.this, "点赞数出错", Toast.LENGTH_SHORT).show();
+					}
+				});
+			}
+		});
+
 	}
 }
