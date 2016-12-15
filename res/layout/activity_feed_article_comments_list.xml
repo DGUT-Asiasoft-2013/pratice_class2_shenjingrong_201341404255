@@ -17,7 +17,7 @@
         android:id="@+id/tv_article_comment_person_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/av_comment_person_face"
+        android:layout_alignTop="@+id/av_comment_person_face"
         android:layout_marginLeft="10dp"
         android:layout_toRightOf="@+id/av_comment_person_face"
         android:text="TextView"

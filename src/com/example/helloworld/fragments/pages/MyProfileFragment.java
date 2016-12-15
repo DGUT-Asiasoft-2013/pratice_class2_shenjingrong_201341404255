@@ -19,6 +19,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -31,7 +32,7 @@ public class MyProfileFragment extends Fragment {
 	TextView textView,tvCommentMsg;
 	ProgressBar progress;
 	AvatarView avatar;
-
+	User users ;
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		if (view==null){
@@ -43,7 +44,11 @@ public class MyProfileFragment extends Fragment {
 			
 			tvCommentMsg.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
+					if(users==null){
+						return;
+					}
 					Intent intent = new Intent(getActivity(),CommentNoticeActivity.class);
+					intent.putExtra("user", users);
 					startActivity(intent);
 				}
 			});
@@ -70,6 +75,7 @@ public class MyProfileFragment extends Fragment {
 			public void onResponse(final Call arg0, Response arg1) throws IOException {
 				try {
 					final User user = new ObjectMapper().readValue(arg1.body().bytes(), User.class);
+					users = user;
 					getActivity().runOnUiThread(new Runnable() {
 						public void run() {
 							MyProfileFragment.this.onResponse(arg0,user);
