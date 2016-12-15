@@ -2,6 +2,7 @@ package com.example.helloworld.fragments.pages;
 
 import java.io.IOException;
 
+import com.example.helloworld.CommentNoticeActivity;
 import com.example.helloworld.R;
 import com.example.helloworld.api.Server;
 import com.example.helloworld.api.entity.User;
@@ -9,10 +10,12 @@ import com.example.helloworld.fragments.widgets.AvatarView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import android.app.Fragment;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -25,7 +28,7 @@ import okhttp3.Response;
 public class MyProfileFragment extends Fragment {
 	View view;
 	
-	TextView textView;
+	TextView textView,tvCommentMsg;
 	ProgressBar progress;
 	AvatarView avatar;
 
@@ -36,6 +39,14 @@ public class MyProfileFragment extends Fragment {
 			textView = (TextView) view.findViewById(R.id.text);
 			progress = (ProgressBar) view.findViewById(R.id.progress);
 			avatar = (AvatarView) view.findViewById(R.id.avatar);
+			tvCommentMsg = (TextView) view.findViewById(R.id.tv_comment_msg);
+			
+			tvCommentMsg.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent(getActivity(),CommentNoticeActivity.class);
+					startActivity(intent);
+				}
+			});
 		}
 
 		return view;

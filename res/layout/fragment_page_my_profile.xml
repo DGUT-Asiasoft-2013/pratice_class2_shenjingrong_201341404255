@@ -1,27 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
-
-    <TextView
-        android:id="@+id/text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="ME" />
+    android:layout_height="match_parent"
+    android:background="#eee" >
 
     <ProgressBar
         android:id="@+id/progress"
         style="@android:style/Widget.ProgressBar.Small"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center" />
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true" />
 
     <com.example.helloworld.fragments.widgets.AvatarView
         android:id="@+id/avatar"
         android:layout_width="120dp"
         android:layout_height="120dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="80dp" />
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp" />
 
-</FrameLayout>
+    <TextView
+        android:id="@+id/tv_comment_msg"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/avatar"
+        android:layout_marginTop="30dp"
+        android:background="#fff"
+        android:orientation="horizontal" 
+        android:text="评论消息"
+        android:gravity="center_vertical"
+        android:paddingLeft="20dp"/>
+    <TextView
+        android:id="@+id/tv_change_password"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/tv_comment_msg"
+        android:layout_marginTop="2dp"
+        android:background="#fff"
+        android:orientation="horizontal" 
+        android:text="修改密码"
+        android:gravity="center_vertical"
+        android:paddingLeft="20dp"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/tv_change_password"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal" 
+        android:text="注销"
+        android:background="#fff"
+        android:gravity="center_vertical"
+        android:paddingLeft="20dp"
+        android:textColor="@android:color/holo_red_light"/>
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/avatar"
+        android:layout_centerHorizontal="true"
+        android:text="TextView" />
+
+</RelativeLayout>

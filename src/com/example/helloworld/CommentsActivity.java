@@ -139,9 +139,7 @@ public class CommentsActivity extends Activity {
 			public void onResponse(Call arg0, Response arg1) throws IOException {
 				String result = arg1.body().string();
 				ObjectMapper mapper = new ObjectMapper();
-				Log.e("error", result);
 				Page<Comment> page = mapper.readValue(result, new TypeReference<Page<Comment>>(){});
-				Log.e("error", "00000");
 				commentList = page.getContent();
 				commentPage = page.getNumber();
 				runOnUiThread(new Runnable() {
